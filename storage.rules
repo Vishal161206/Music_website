@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Song uploads ──────────────────────────────────────────────────────────
+    // Path format: songs/{songId}/audio-{timestamp}.{ext}
+    // Path format: songs/{songId}/cover-{timestamp}.{ext}
+    match /songs/{songId}/{file} {
+      // Anyone can read (download) audio and cover files — songs are public
+      allow read: if true;
+
+      // Only authenticated users can upload files
+      // Validation is based on contentType (more reliable than filename pattern matching)
+      allow write: if request.auth != null && (
+        // Audio file: up to 100 MB
+        (request.resource.contentType.matches('audio/.*')
+          && request.resource.size <= 100 * 1024 * 1024)
+        ||
+        // Image file (cover): up to 10 MB
+        (request.resource.contentType.matches('image/.*')
+          && request.resource.size <= 10 * 1024 * 1024)
+      );
+
+      // Only authenticated users can delete
+      allow delete: if request.auth != null;
+    }
+  }
+}
