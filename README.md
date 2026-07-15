@@ -5,7 +5,7 @@
 **A premium, dark-themed music streaming web app with private playlists and cloud-powered uploads.**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite)](https://vite.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
@@ -17,7 +17,7 @@
 
 ## ✨ Overview
 
-SonicObsidian is an immersive, high-fidelity music streaming application built with React and TypeScript. It features a stunning obsidian-dark UI with glassmorphism effects, real-time audio playback, private playlist management, and a unique **zero-cost file storage** architecture that uploads audio and cover art to Google Drive via an Apps Script proxy — completely avoiding Firebase Storage costs.
+SonicObsidian is an immersive, high-fidelity music streaming application built with React (JavaScript/JSX). It features a stunning obsidian-dark UI with glassmorphism effects, real-time audio playback, private playlist management, and a unique **zero-cost file storage** architecture that uploads audio and cover art to Google Drive via an Apps Script proxy — completely avoiding Firebase Storage costs.
 
 > **Works without Firebase too!** — If no Firebase credentials are configured, the app gracefully falls back to local-only mode using `localStorage`.
 
@@ -67,7 +67,7 @@ SonicObsidian is an immersive, high-fidelity music streaming application built w
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     React Frontend                      │
-│              (Vite + TypeScript + Tailwind)              │
+│               (Vite + JavaScript + Tailwind)             │
 ├──────────────┬──────────────────┬────────────────────────┤
 │  Firebase    │  Firebase        │  Google Apps Script    │
 │  Auth        │  Firestore       │  (Drive Upload Proxy)  │
@@ -97,35 +97,31 @@ SonicObsidian/
 │   └── Code.gs              # Google Apps Script for Drive upload proxy
 ├── src/
 │   ├── components/
-│   │   ├── AddSongModal.tsx      # Upload song modal with progress tracking
-│   │   ├── AuthModal.tsx         # Login / Register modal
-│   │   ├── BottomPlayer.tsx      # Persistent playback controls
-│   │   ├── CreatePlaylistModal.tsx
-│   │   ├── EditSongModal.tsx     # Edit song metadata
-│   │   ├── Header.tsx            # Top bar with search + theme toggle
-│   │   ├── HomeView.tsx          # Main feed with songs + playlists
-│   │   ├── LibraryView.tsx       # User's library
-│   │   ├── MobileNav.tsx         # Bottom navigation for mobile
-│   │   ├── NowPlayingView.tsx    # Full-screen now playing experience
-│   │   ├── PlaylistDetailView.tsx
-│   │   └── Sidebar.tsx           # Desktop sidebar navigation
+│   │   ├── AddSongModal.jsx      # Upload song modal with progress tracking
+│   │   ├── AuthModal.jsx         # Login / Register modal
+│   │   ├── BottomPlayer.jsx      # Persistent playback controls
+│   │   ├── CreatePlaylistModal.jsx
+│   │   ├── EditSongModal.jsx     # Edit song metadata
+│   │   ├── Header.jsx            # Top bar with search + theme toggle
+│   │   ├── HomeView.jsx          # Main feed with songs + playlists
+│   │   ├── LibraryView.jsx       # User's library
+│   │   ├── MobileNav.jsx         # Bottom navigation for mobile
+│   │   ├── NowPlayingView.jsx    # Full-screen now playing experience
+│   │   ├── PlaylistDetailView.jsx
+│   │   └── Sidebar.jsx           # Desktop sidebar navigation
 │   ├── contexts/
-│   │   └── AuthContext.tsx       # Firebase auth context provider
+│   │   └── AuthContext.jsx       # Firebase auth context provider
 │   ├── services/
-│   │   ├── driveService.ts       # Google Drive upload (base64 → Apps Script)
-│   │   └── songService.ts       # Firestore CRUD for songs + playlists
-│   ├── App.tsx                   # Root component + state management
-│   ├── firebase.ts               # Firebase initialization
+│   │   ├── driveService.js       # Google Drive upload (base64 → Apps Script)
+│   │   └── songService.js        # Firestore CRUD for songs + playlists
+│   ├── App.jsx                   # Root component + state management
+│   ├── firebase.js               # Firebase initialization
 │   ├── index.css                 # Design system + animations
-│   ├── main.tsx                  # Entry point
-│   └── types.ts                  # TypeScript interfaces
+│   └── main.jsx                  # Entry point
 ├── firestore.rules               # Firestore security rules
-├── storage.rules                 # Firebase Storage rules (optional)
-├── cors.json                     # CORS config for Firebase Storage
 ├── .env.example                  # Environment variable template
 ├── index.html                    # HTML entry with SEO meta tags
-├── vite.config.ts
-├── tsconfig.json
+├── vite.config.js
 └── package.json
 ```
 
@@ -211,7 +207,6 @@ The app will be available at `http://localhost:3000`.
 | `npm run dev` | Start development server on port 3000 |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
-| `npm run lint` | TypeScript type checking |
 | `npm run clean` | Remove build artifacts |
 
 ---
@@ -237,7 +232,7 @@ The app will be available at `http://localhost:3000`.
 | Layer | Technology |
 |-------|-----------|
 | **UI Framework** | React 19 |
-| **Language** | TypeScript 5.8 |
+| **Language** | JavaScript (ES2022) / JSX |
 | **Build Tool** | Vite 6 |
 | **Styling** | Tailwind CSS 4 |
 | **Animations** | Motion (Framer Motion) |

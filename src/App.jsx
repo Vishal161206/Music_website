@@ -4,20 +4,19 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Song, Playlist, ActiveScreen } from './types';
 
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import BottomPlayer from './components/BottomPlayer';
-import HomeView from './components/HomeView';
-import LibraryView from './components/LibraryView';
-import PlaylistDetailView from './components/PlaylistDetailView';
-import NowPlayingView from './components/NowPlayingView';
-import CreatePlaylistModal from './components/CreatePlaylistModal';
-import AddSongModal from './components/AddSongModal';
-import EditSongModal from './components/EditSongModal';
-import MobileNav from './components/MobileNav';
-import AuthModal from './components/AuthModal';
+import Sidebar from './components/Sidebar.jsx';
+import Header from './components/Header.jsx';
+import BottomPlayer from './components/BottomPlayer.jsx';
+import HomeView from './components/HomeView.jsx';
+import LibraryView from './components/LibraryView.jsx';
+import PlaylistDetailView from './components/PlaylistDetailView.jsx';
+import NowPlayingView from './components/NowPlayingView.jsx';
+import CreatePlaylistModal from './components/CreatePlaylistModal.jsx';
+import AddSongModal from './components/AddSongModal.jsx';
+import EditSongModal from './components/EditSongModal.jsx';
+import MobileNav from './components/MobileNav.jsx';
+import AuthModal from './components/AuthModal.jsx';
 import { Sparkles } from 'lucide-react';
 import {
   subscribeToSongs,
@@ -36,50 +35,50 @@ export default function App() {
   const { currentUser, username, isAuthLoading, isFirebaseReady } = useAuth();
 
   // ── Data state (from Firestore or localStorage) ────────────────────────
-  const [songs, setSongs] = useState<Song[]>(() => {
+  const [songs, setSongs] = useState(() => {
     const saved = localStorage.getItem('sonic_obsidian_songs_v2');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+  const [playlists, setPlaylists] = useState(() => {
     // Only restore playlists that belong to the current user (handled in sync effect)
     return [];
   });
 
   // ── UI state ──────────────────────────────────────────────────────────
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('home');
-  const [currentSong, setCurrentSong] = useState<Song | null>(null);
-  const [editingSong, setEditingSong] = useState<Song | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
-  const [volume, setVolume] = useState<number>(80);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [isShuffle, setIsShuffle] = useState<boolean>(false);
-  const [isRepeat, setIsRepeat] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
-  const [likedSongIds, setLikedSongIds] = useState<string[]>(() => {
+  const [activeScreen, setActiveScreen] = useState('home');
+  const [currentSong, setCurrentSong] = useState(null);
+  const [editingSong, setEditingSong] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(80);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [likedSongIds, setLikedSongIds] = useState(() => {
     const saved = localStorage.getItem('sonic_obsidian_likes');
-    return saved ? JSON.parse(saved) : []; // Fixed: removed hardcoded ['6','8','11']
+    return saved ? JSON.parse(saved) : [];
   });
-  const [playQueue, setPlayQueue] = useState<Song[]>([]);
-  const [queueIndex, setQueueIndex] = useState<number>(0);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [playQueue, setPlayQueue] = useState([]);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
-  const [activeNotification, setActiveNotification] = useState<string | null>(null);
-  const [history, setHistory] = useState<Song[]>([]);
+  const [activeNotification, setActiveNotification] = useState(null);
+  const [history, setHistory] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isCloudMode = isFirebaseConfigured;
 
   // ── Real <audio> element ref ───────────────────────────────────────────
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef(null);
 
   // Fix: use a ref to always call the latest handleAutoNext from the 'ended' listener
-  const handleAutoNextRef = useRef<() => void>(() => {});
+  const handleAutoNextRef = useRef(() => {});
 
   // Ref to track the desired play state for the canplay handler
-  const wantsToPlayRef = useRef<boolean>(false);
+  const wantsToPlayRef = useRef(false);
 
   // Create audio element once
   useEffect(() => {
@@ -206,7 +205,7 @@ export default function App() {
   }, [likedSongIds]);
 
   // ── Toast notification ─────────────────────────────────────────────────
-  const triggerToast = useCallback((msg: string) => {
+  const triggerToast = useCallback((msg) => {
     setActiveNotification(msg);
     setTimeout(() => setActiveNotification(null), 3500);
   }, []);
@@ -216,7 +215,7 @@ export default function App() {
     setPlayQueue((queue) => {
       if (queue.length === 0) return queue;
       setQueueIndex((idx) => {
-        let nextIdx: number;
+        let nextIdx;
         if (isShuffle) {
           nextIdx = Math.floor(Math.random() * queue.length);
         } else {
@@ -265,7 +264,7 @@ export default function App() {
     handleAutoNextRef.current = handleAutoNext;
   }, [handleAutoNext]);
 
-  const playSong = useCallback((song: Song) => {
+  const playSong = useCallback((song) => {
     setCurrentSong(song);
     setProgress(0);
     setIsPlaying(true);
@@ -290,7 +289,7 @@ export default function App() {
     triggerToast(`Playing: "${song.title}"`);
   }, [triggerToast]);
 
-  const playPlaylist = useCallback((playlist: Playlist) => {
+  const playPlaylist = useCallback((playlist) => {
     const pSongs = songs.filter((s) => playlist.songIds.includes(s.id));
     if (pSongs.length > 0) {
       setPlayQueue(pSongs);
@@ -304,7 +303,7 @@ export default function App() {
     }
   }, [songs, triggerToast]);
 
-  const playPlaylistRandomly = useCallback((playlist: Playlist) => {
+  const playPlaylistRandomly = useCallback((playlist) => {
     const pSongs = songs.filter((s) => playlist.songIds.includes(s.id));
     if (pSongs.length > 0) {
       const shuffled = [...pSongs].sort(() => Math.random() - 0.5);
@@ -321,7 +320,7 @@ export default function App() {
   }, [songs, triggerToast]);
 
   // ── Playlist management ────────────────────────────────────────────────
-  const addSongToPlaylist = useCallback((playlistId: string, songId: string) => {
+  const addSongToPlaylist = useCallback((playlistId, songId) => {
     setPlaylists((prev) => {
       const updated = prev.map((pl) => {
         if (pl.id === playlistId) {
@@ -344,7 +343,7 @@ export default function App() {
     triggerToast('Track added to playlist!');
   }, [isCloudMode, triggerToast]);
 
-  const removeSongFromPlaylist = useCallback((playlistId: string, songId: string) => {
+  const removeSongFromPlaylist = useCallback((playlistId, songId) => {
     setPlaylists((prev) => {
       const updated = prev.map((pl) => {
         if (pl.id === playlistId) {
@@ -366,7 +365,7 @@ export default function App() {
   }, [isCloudMode, triggerToast]);
 
   // Called by AddSongModal after successful upload
-  const handleUploadAddSong = useCallback((newSong: Song) => {
+  const handleUploadAddSong = useCallback((newSong) => {
     setSongs((prev) => {
       const exists = prev.some((s) => s.id === newSong.id);
       return exists ? prev : [newSong, ...prev];
@@ -390,7 +389,7 @@ export default function App() {
   }, [isCloudMode, triggerToast]);
 
   // ── Delete a song globally ──────────────────────────────────────────────
-  const handleDeleteSong = useCallback(async (songId: string) => {
+  const handleDeleteSong = useCallback(async (songId) => {
     const songToDelete = songs.find(s => s.id === songId);
 
     setSongs(prev => prev.filter(s => s.id !== songId));
@@ -424,7 +423,7 @@ export default function App() {
   }, [songs, isCloudMode, triggerToast]);
 
   // ── Delete a playlist ───────────────────────────────────────────────────
-  const handleDeletePlaylist = useCallback(async (playlistId: string) => {
+  const handleDeletePlaylist = useCallback(async (playlistId) => {
     setPlaylists(prev => prev.filter(pl => pl.id !== playlistId));
     if (selectedPlaylist?.id === playlistId) {
       setSelectedPlaylist(null);
@@ -443,7 +442,7 @@ export default function App() {
   }, [isCloudMode, selectedPlaylist, triggerToast]);
 
   // ── Edit / update a song ────────────────────────────────────────────────
-  const handleEditSong = useCallback(async (updated: Song, newCoverFile: File | null) => {
+  const handleEditSong = useCallback(async (updated, newCoverFile) => {
     let finalSong = { ...updated };
 
     if (newCoverFile && isCloudMode) {
@@ -479,7 +478,7 @@ export default function App() {
     triggerToast(`"${finalSong.title}" updated!`);
   }, [songs, isCloudMode, triggerToast]);
 
-  const handleToggleLike = useCallback((songId: string) => {
+  const handleToggleLike = useCallback((songId) => {
     setLikedSongIds((prev) => {
       if (prev.includes(songId)) {
         triggerToast('Removed from liked songs.');
@@ -491,13 +490,13 @@ export default function App() {
     });
   }, [triggerToast]);
 
-  const viewPlaylistDetail = useCallback((playlist: Playlist) => {
+  const viewPlaylistDetail = useCallback((playlist) => {
     setSelectedPlaylist(playlist);
     setActiveScreen('playlist-detail');
   }, []);
 
-  const handleAddPlaylist = useCallback((newPl: Playlist) => {
-    const cleanedPl: Playlist = {
+  const handleAddPlaylist = useCallback((newPl) => {
+    const cleanedPl = {
       ...newPl,
       songIds: [],
       createdAt: Date.now(),
@@ -515,7 +514,7 @@ export default function App() {
   }, [isCloudMode, triggerToast, viewPlaylistDetail, currentUser?.uid]);
 
   // Seek handler passed to BottomPlayer and NowPlayingView
-  const handleSeek = useCallback((seconds: number) => {
+  const handleSeek = useCallback((seconds) => {
     const audio = audioRef.current;
     if (audio && currentSong?.audioUrl) {
       audio.currentTime = seconds;

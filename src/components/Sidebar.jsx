@@ -17,20 +17,7 @@ import {
   LogOut,
   User,
 } from 'lucide-react';
-import { ActiveScreen } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-
-interface SidebarProps {
-  activeScreen: ActiveScreen;
-  setActiveScreen: (screen: ActiveScreen) => void;
-  onOpenCreatePlaylist: () => void;
-  onOpenAddSong: () => void;
-  likedCount: number;
-  isOpen: boolean;
-  onClose: () => void;
-  isCloudMode: boolean;
-  username: string;
-}
 
 export default function Sidebar({
   activeScreen,
@@ -42,10 +29,10 @@ export default function Sidebar({
   onClose,
   isCloudMode,
   username,
-}: SidebarProps) {
+}) {
   const { logout } = useAuth();
 
-  const navBtnCls = (active: boolean) =>
+  const navBtnCls = (active) =>
     `w-full flex items-center gap-4 py-3 px-4 rounded-lg font-sans text-sm font-medium transition-all cursor-pointer text-left ${
       active
         ? 'text-primary-electric border-l-4 border-primary-electric bg-primary-electric/5 font-bold'

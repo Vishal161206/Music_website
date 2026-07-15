@@ -16,20 +16,6 @@ import {
   Sparkles,
   Upload,
 } from 'lucide-react';
-import { Song } from '../types';
-
-interface NowPlayingViewProps {
-  currentSong: Song;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  progress: number;
-  onSeek: (seconds: number) => void;   // Fixed: now properly exposed
-  likedSongIds: string[];
-  onToggleLike: (songId: string) => void;
-  onClose: () => void;
-  playQueue: Song[];
-  onPlaySong: (song: Song) => void;
-}
 
 export default function NowPlayingView({
   currentSong,
@@ -42,9 +28,9 @@ export default function NowPlayingView({
   onClose,
   playQueue,
   onPlaySong,
-}: NowPlayingViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
+}) {
+  const canvasRef = useRef(null);
+  const progressBarRef = useRef(null);
   const [activeLyricIndex, setActiveLyricIndex] = useState(0);
   const [shareToast, setShareToast] = useState(false);
 
@@ -68,7 +54,7 @@ export default function NowPlayingView({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let rAFId: number;
+    let rAFId;
     let phase = 0;
 
     const render = () => {
@@ -116,7 +102,7 @@ export default function NowPlayingView({
   }, [isPlaying]);
 
   // Seek from progress bar click
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleProgressClick = (e) => {
     if (!progressBarRef.current || currentSong.durationSec <= 0) return;
     const rect = progressBarRef.current.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -146,7 +132,7 @@ export default function NowPlayingView({
     ? (progress / currentSong.durationSec) * 100
     : 0;
 
-  const formatTime = (s: number) => {
+  const formatTime = (s) => {
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m}:${sec < 10 ? '0' : ''}${sec}`;

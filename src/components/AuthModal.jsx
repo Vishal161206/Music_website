@@ -10,20 +10,16 @@ import React, { useState } from 'react';
 import { Flame, User, Lock, Eye, EyeOff, Loader2, AlertCircle, Music } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-interface AuthModalProps {
-  onSuccess: () => void;
-}
-
-export default function AuthModal({ onSuccess }: AuthModalProps) {
+export default function AuthModal({ onSuccess }) {
   const { register, login } = useAuth();
 
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [tab, setTab] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const resetForm = () => {
     setUsername('');
@@ -32,18 +28,18 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
     setError(null);
   };
 
-  const switchTab = (t: 'login' | 'register') => {
+  const switchTab = (t) => {
     setTab(t);
     resetForm();
   };
 
-  const validateUsername = (u: string) => {
+  const validateUsername = (u) => {
     if (u.trim().length < 3) return 'Username must be at least 3 characters.';
     if (!/^[a-zA-Z0-9_. ]+$/.test(u)) return 'Username can only contain letters, numbers, spaces, dots or underscores.';
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
@@ -68,7 +64,7 @@ export default function AuthModal({ onSuccess }: AuthModalProps) {
         await login(username.trim(), password);
       }
       onSuccess();
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong.';
       // Translate Firebase error messages to user-friendly text
       if (msg.includes('email-already-in-use') || msg.includes('already-in-use')) {

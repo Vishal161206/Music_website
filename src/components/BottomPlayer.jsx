@@ -19,29 +19,6 @@ import {
   Maximize2,
   X,
 } from 'lucide-react';
-import { Song } from '../types';
-
-interface BottomPlayerProps {
-  currentSong: Song;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  progress: number;
-  onSeek: (seconds: number) => void;
-  volume: number;
-  setVolume: (vol: number) => void;
-  isMuted: boolean;
-  setIsMuted: (muted: boolean) => void;
-  isShuffle: boolean;
-  setIsShuffle: (shuf: boolean) => void;
-  isRepeat: boolean;
-  setIsRepeat: (rep: boolean) => void;
-  likedSongIds: string[];
-  onToggleLike: (songId: string) => void;
-  onSkipNext: () => void;
-  onSkipPrev: () => void;
-  onOpenFullscreen: () => void;
-  onClose: () => void;
-}
 
 export default function BottomPlayer({
   currentSong,
@@ -63,19 +40,19 @@ export default function BottomPlayer({
   onSkipPrev,
   onOpenFullscreen,
   onClose,
-}: BottomPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null);
+}) {
+  const progressBarRef = useRef(null);
   const isDragging = useRef(false);
   const isLiked = likedSongIds.includes(currentSong.id);
   const hasSrc = !!currentSong.audioUrl;
 
-  const formatTime = (secs: number) => {
+  const formatTime = (secs) => {
     const min = Math.floor(secs / 60);
     const sec = Math.floor(secs % 60);
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
   };
 
-  const seekFromEvent = (e: React.MouseEvent<HTMLDivElement>) => {
+  const seekFromEvent = (e) => {
     if (progressBarRef.current) {
       const rect = progressBarRef.current.getBoundingClientRect();
       const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -83,7 +60,7 @@ export default function BottomPlayer({
     }
   };
 
-  const handleVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleVolumeClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const vol = Math.floor(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 100);
     setVolume(vol);

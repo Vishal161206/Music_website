@@ -19,26 +19,6 @@ import {
   Grid,
   Pencil
 } from 'lucide-react';
-import { Playlist, Song } from '../types';
-
-interface PlaylistDetailViewProps {
-  playlist: Playlist;
-  songs: Song[];
-  onPlaySong: (song: Song) => void;
-  onPlayPlaylist: (playlist: Playlist) => void;
-  onPlayPlaylistRandomly: (playlist: Playlist) => void;
-  onAddSongToPlaylist: (playlistId: string, songId: string) => void;
-  onRemoveSongFromPlaylist: (playlistId: string, songId: string) => void;
-  activeSongId: string;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  likedSongIds: string[];
-  onToggleLike: (songId: string) => void;
-  onDeleteSong: (songId: string) => void;
-  onEditSong: (song: Song) => void;
-  onDeletePlaylist: (playlistId: string) => void;
-  onBack: () => void;
-}
 
 export default function PlaylistDetailView({
   playlist,
@@ -57,10 +37,10 @@ export default function PlaylistDetailView({
   onEditSong,
   onDeletePlaylist,
   onBack,
-}: PlaylistDetailViewProps) {
+}) {
   const [playlistQuery, setPlaylistQuery] = useState('');
   const [searchAvailableQuery, setSearchAvailableQuery] = useState('');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // Hydrate songs belonging to this playlist from dynamic songs list
   const playlistSongs = songs.filter(song => playlist.songIds.includes(song.id));
@@ -179,7 +159,7 @@ export default function PlaylistDetailView({
             )}
           </button>
 
-          {/* PLAY RANDOMLY BUTTON (🔀 theme matching) */}
+          {/* PLAY RANDOMLY BUTTON */}
           <button
             onClick={() => onPlayPlaylistRandomly(playlist)}
             className="flex items-center gap-2 px-5 py-3.5 bg-obsidian-container-high hover:bg-obsidian-container-highest text-obsidian-on-surface rounded-full font-bold text-xs hover:scale-105 active:scale-95 transition-transform border border-white/5 cursor-pointer shadow-md"
@@ -371,21 +351,21 @@ export default function PlaylistDetailView({
                 key={song.id}
                 className="flex items-center gap-4 bg-obsidian-base/40 border border-white/5 rounded-xl p-3 pr-4 hover:border-primary-electric/25 transition-all text-left"
               >
-                <img src={song.coverUrl} className="w-11 h-11 rounded object-cover shadow" alt="art" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-obsidian-on-surface truncate">{song.title}</p>
-                  <p className="text-xs text-obsidian-on-surface-variant/40 truncate mt-0.5">{song.artist}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onAddSongToPlaylist(playlist.id, song.id)}
-                  className="flex items-center gap-1 py-1.5 px-3 rounded-full bg-primary-electric/15 hover:bg-primary-electric hover:text-black font-semibold text-[11px] text-primary-electric cursor-pointer active:scale-95 transition-all"
-                  title="Add Song To Playlist"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
-                </button>
+              <img src={song.coverUrl} className="w-11 h-11 rounded object-cover shadow" alt="art" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-obsidian-on-surface truncate">{song.title}</p>
+                <p className="text-xs text-obsidian-on-surface-variant/40 truncate mt-0.5">{song.artist}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => onAddSongToPlaylist(playlist.id, song.id)}
+                className="flex items-center gap-1 py-1.5 px-3 rounded-full bg-primary-electric/15 hover:bg-primary-electric hover:text-black font-semibold text-[11px] text-primary-electric cursor-pointer active:scale-95 transition-all"
+                title="Add Song To Playlist"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add</span>
+              </button>
+            </div>
             ))}
           </div>
         )}

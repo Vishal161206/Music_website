@@ -5,12 +5,6 @@
 
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
-import { Playlist } from '../types';
-
-interface CreatePlaylistModalProps {
-  onClose: () => void;
-  onSave: (playlist: Playlist) => void;
-}
 
 const PRESET_COVERS = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuBnzd57QpExo-eBsk_19-QmXPq2jA4tftgLTrCWUjrgIf89pHNDc2tw67WGqTPjONYw9n4cLX2N6PL77YVUxclfSowGOG5ypUU9aoC9AM80VMtAsKA4EPmWqrLhGaM6-Tt1w51rK4FA3l1y8r0cU2qSRhYXNLz1oS5Ix55Pw6qHS4LJqXWOAKAG4bA18QrvGdne6tn5k8tFE10ar4Xmy3EEuZSNQEjLpTvQ8s9PF2vj2m_Q0ULnZ-HuAmHGjMb4XW7a9iFd4VVr-PQ',
@@ -19,16 +13,16 @@ const PRESET_COVERS = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAFMmoPFoNksF_nIXDbvhsY9b4xGP3eQ2r65W9grYtDClyUulYFzoA3i82B0dvC4zaCsU5R6GP_eOFeEoSek61l60fDEw1K4VPPOo6Mvi-jRHRjhC8veKzwI0A8s6j6Ftm0OGNU6WCm26E0-Bl00IyjuSGX7BQvnxxi5qGyiqMWmWTDcmrfuNRWp43F51Po9Y-TphYZf1BOc9uqCOM-OsWdmpcnC8V83OnhzTht_ld2QssKgFft7VCJfWZxLEFmKdbER2waYxg3iAE'
 ];
 
-export default function CreatePlaylistModal({ onClose, onSave }: CreatePlaylistModalProps) {
+export default function CreatePlaylistModal({ onClose, onSave }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCover, setSelectedCover] = useState(PRESET_COVERS[0]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const newPlaylist: Playlist = {
+    const newPlaylist = {
       id: `pl-${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
@@ -36,7 +30,7 @@ export default function CreatePlaylistModal({ onClose, onSave }: CreatePlaylistM
       songIds: [],        // Fixed: always start empty — no phantom song IDs
       isPublic: false,    // Private by default — only visible to the owner
       isUserCreated: true,
-      userId: '',         // Will be set by App.tsx handleAddPlaylist using currentUser.uid
+      userId: '',         // Will be set by App.jsx handleAddPlaylist using currentUser.uid
     };
 
     onSave(newPlaylist);

@@ -17,19 +17,7 @@ import {
   User,
   Info,
 } from 'lucide-react';
-import { ActiveScreen } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-
-interface HeaderProps {
-  activeScreen: ActiveScreen;
-  setActiveScreen: (screen: ActiveScreen) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  isDarkMode: boolean;
-  setIsDarkMode: (dark: boolean) => void;
-  onOpenNotifications: () => void;
-  onToggleSidebar: () => void;
-}
 
 export default function Header({
   activeScreen,
@@ -40,15 +28,15 @@ export default function Header({
   setIsDarkMode,
   onOpenNotifications,
   onToggleSidebar,
-}: HeaderProps) {
+}) {
   const { logout, username, currentUser } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
         setSettingsOpen(false);
       }
     };
@@ -109,12 +97,10 @@ export default function Header({
 
         {/* Tab shortcuts (desktop only) */}
         <div className="hidden lg:flex items-center gap-4 text-xs font-sans font-medium text-obsidian-on-surface-variant/60">
-          {(
-            [
-              { label: 'Music', screen: 'home' as ActiveScreen },
-              { label: 'Library', screen: 'library' as ActiveScreen },
-            ] as { label: string; screen: ActiveScreen }[]
-          ).map(({ label, screen }) => (
+          {[
+            { label: 'Music', screen: 'home' },
+            { label: 'Library', screen: 'library' },
+          ].map(({ label, screen }) => (
             <button
               key={label}
               onClick={() => setActiveScreen(screen)}

@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Artist } from './types';
-
-export const mockArtists: Artist[] = [
+export const mockArtists = [
   {
     id: 'art-1',
     name: 'The Midnight Echo',

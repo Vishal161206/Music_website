@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * driveService.ts — Google Drive upload via Google Apps Script proxy.
+ * driveService.js — Google Drive upload via Google Apps Script proxy.
  *
  * Flow:
  *  1. Convert File → base64 (FileReader, tracked for encoding progress)
@@ -14,16 +14,9 @@
  * using YOUR Google account and runs completely free within Google's quota.
  */
 
-const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined;
-const DRIVE_SECRET     = import.meta.env.VITE_DRIVE_SECRET   as string | undefined;
-const DRIVE_FOLDER_ID  = import.meta.env.VITE_DRIVE_FOLDER_ID as string | undefined;
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export interface DriveUploadResult {
-  fileId: string;
-  url: string;
-}
+const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL;
+const DRIVE_SECRET     = import.meta.env.VITE_DRIVE_SECRET;
+const DRIVE_FOLDER_ID  = import.meta.env.VITE_DRIVE_FOLDER_ID;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -32,10 +25,7 @@ export interface DriveUploadResult {
  * Reports encoding progress via `onProgress` (0–50 represents the encoding phase
  * in a combined 0–100 scale shared with upload).
  */
-function fileToBase64(
-  file: File,
-  onProgress?: (pct: number) => void,
-): Promise<string> {
+function fileToBase64(file, onProgress) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onprogress = (evt) => {
@@ -45,7 +35,7 @@ function fileToBase64(
       }
     };
     reader.onload = () => {
-      const result = reader.result as string;
+      const result = reader.result;
       // Strip the data URL prefix (e.g. "data:audio/mpeg;base64,")
       const base64 = result.split(',')[1];
       if (base64) {
@@ -71,10 +61,7 @@ function fileToBase64(
  *  Trade-off: we lose real upload progress events on the XHR upload phase,
  *  so we simulate progress with a timer during the upload phase (40→90%).
  */
-async function postToAppsScript(
-  payload: object,
-  onProgress?: (pct: number) => void,
-): Promise<DriveUploadResult> {
+async function postToAppsScript(payload, onProgress) {
   const url = APPS_SCRIPT_URL;
   if (!url || url === 'YOUR_APPS_SCRIPT_URL_HERE') {
     throw new Error(
@@ -116,7 +103,7 @@ async function postToAppsScript(
     const text = await response.text();
 
     // Apps Script sometimes wraps the JSON in a callback — handle plain JSON
-    let data: { success: boolean; fileId?: string; url?: string; error?: string };
+    let data;
     try {
       data = JSON.parse(text);
     } catch {
@@ -128,7 +115,7 @@ async function postToAppsScript(
     }
 
     onProgress?.(100);
-    return { fileId: data.fileId!, url: data.url! };
+    return { fileId: data.fileId, url: data.url };
 
   } catch (err) {
     clearInterval(progressInterval);
@@ -152,11 +139,7 @@ async function postToAppsScript(
  * Upload an audio file to Google Drive via the Apps Script proxy.
  * Returns the permanent public Google Drive download URL.
  */
-export async function uploadAudioToDrive(
-  file: File,
-  songId: string,
-  onProgress?: (pct: number) => void,
-): Promise<string> {
+export async function uploadAudioToDrive(file, songId, onProgress) {
   const MAX_BASE64_MB = 24; // ~32MB Apps Script limit ÷ 1.33 base64 overhead
   if (file.size > MAX_BASE64_MB * 1024 * 1024) {
     throw new Error(
@@ -187,11 +170,7 @@ export async function uploadAudioToDrive(
  * Upload a cover image to Google Drive via the Apps Script proxy.
  * Returns the permanent public Google Drive view URL.
  */
-export async function uploadCoverToDrive(
-  file: File,
-  songId: string,
-  onProgress?: (pct: number) => void,
-): Promise<string> {
+export async function uploadCoverToDrive(file, songId, onProgress) {
   const MAX_COVER_MB = 10;
   if (file.size > MAX_COVER_MB * 1024 * 1024) {
     throw new Error(`Cover image must be under ${MAX_COVER_MB} MB.`);

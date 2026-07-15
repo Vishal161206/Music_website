@@ -8,16 +8,8 @@
 
 import React from 'react';
 import { Home, Library, Upload, Heart, Menu } from 'lucide-react';
-import { ActiveScreen } from '../types';
 
-interface MobileNavProps {
-  activeScreen: ActiveScreen;
-  setActiveScreen: (screen: ActiveScreen) => void;
-  onOpenAddSong: () => void;
-  onToggleSidebar: () => void;
-}
-
-export default function MobileNav({ activeScreen, setActiveScreen, onOpenAddSong, onToggleSidebar }: MobileNavProps) {
+export default function MobileNav({ activeScreen, setActiveScreen, onOpenAddSong, onToggleSidebar }) {
   return (
     <nav className="md:hidden fixed bottom-24 left-0 right-0 z-40 px-3">
       <div className="bg-obsidian-container-low/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex items-center justify-around py-2 px-1">

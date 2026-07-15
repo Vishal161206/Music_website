@@ -8,14 +8,13 @@
  * so users never need to type an email address.
  */
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateProfile,
-  User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../firebase';
@@ -23,27 +22,17 @@ import { auth, db, isFirebaseConfigured } from '../firebase';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Convert a plain username to a pseudo-email for Firebase Auth */
-const toEmail = (username: string) =>
+const toEmail = (username) =>
   `${username.trim().toLowerCase().replace(/\s+/g, '_')}@sonicobsidian.local`;
 
-// ─── Context shape ───────────────────────────────────────────────────────────
+// ─── Context ─────────────────────────────────────────────────────────────────
 
-interface AuthContextValue {
-  currentUser: User | null;
-  username: string;
-  isAuthLoading: boolean;
-  isFirebaseReady: boolean;
-  register: (username: string, password: string) => Promise<void>;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext(null);
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
   const [username, setUsername] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
@@ -78,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── register ──────────────────────────────────────────────────────────────
-  const register = async (usernameInput: string, password: string) => {
+  const register = async (usernameInput, password) => {
     if (!auth) throw new Error('Firebase Auth not configured.');
     const email = toEmail(usernameInput);
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -97,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // ── login ─────────────────────────────────────────────────────────────────
-  const login = async (usernameInput: string, password: string) => {
+  const login = async (usernameInput, password) => {
     if (!auth) throw new Error('Firebase Auth not configured.');
     const email = toEmail(usernameInput);
     await signInWithEmailAndPassword(auth, email, password);
@@ -129,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useAuth(): AuthContextValue {
+export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
   return ctx;

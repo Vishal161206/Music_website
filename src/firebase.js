@@ -13,9 +13,9 @@
  *  - Firebase Storage (audio/cover files now stored on Google Drive for free)
  */
 
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -33,9 +33,9 @@ export const isFirebaseConfigured =
   !!firebaseConfig.projectId &&
   firebaseConfig.projectId !== 'your_project_id_here';
 
-let app: FirebaseApp | null = null;
-let db: Firestore | null = null;
-let auth: Auth | null = null;
+let app = null;
+let db = null;
+let auth = null;
 
 if (isFirebaseConfigured) {
   try {

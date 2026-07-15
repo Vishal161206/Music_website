@@ -5,20 +5,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { Play, Music, PlusSquare, Upload, ChevronRight, ChevronLeft, User, Pencil, Trash2, Filter, X } from 'lucide-react';
-import { Song, Playlist } from '../types';
-
-interface HomeViewProps {
-  songs: Song[];
-  onPlaySong: (song: Song) => void;
-  onPlayPlaylist: (playlist: Playlist) => void;
-  activeSongId: string;
-  playlists: Playlist[];
-  onViewPlaylist: (playlist: Playlist) => void;
-  onOpenCreatePlaylist: () => void;
-  onOpenAddSong: () => void;
-  onDeleteSong: (songId: string) => void;
-  onEditSong: (song: Song) => void;
-}
 
 export default function HomeView({
   songs,
@@ -31,11 +17,11 @@ export default function HomeView({
   onOpenAddSong,
   onDeleteSong,
   onEditSong,
-}: HomeViewProps) {
-  const [visualizerHeights, setVisualizerHeights] = useState<number[]>(
+}) {
+  const [visualizerHeights, setVisualizerHeights] = useState(
     [40, 70, 50, 90, 30, 80, 45, 60, 35, 75, 55, 95]
   );
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // ── Pagination ──────────────────────────────────────────────────────────────
   const SONGS_PER_PAGE = 20;
@@ -478,8 +464,8 @@ export default function HomeView({
                   if (Math.abs(page - currentPage) <= 1) return true;
                   return false;
                 })
-                .reduce<(number | 'ellipsis')[]>((acc, page, idx, arr) => {
-                  if (idx > 0 && typeof arr[idx - 1] === 'number' && page - (arr[idx - 1] as number) > 1) {
+                .reduce((acc, page, idx, arr) => {
+                  if (idx > 0 && typeof arr[idx - 1] === 'number' && page - arr[idx - 1] > 1) {
                     acc.push('ellipsis');
                   }
                   acc.push(page);
@@ -491,7 +477,7 @@ export default function HomeView({
                   ) : (
                     <button
                       key={item}
-                      onClick={() => setCurrentPage(item as number)}
+                      onClick={() => setCurrentPage(item)}
                       className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         currentPage === item
                           ? 'bg-primary-electric text-black shadow-lg'
@@ -561,28 +547,28 @@ export default function HomeView({
                 onClick={() => onViewPlaylist(pl)}
                 className="group p-4 bg-obsidian-container-low hover:bg-obsidian-container-high rounded-2xl border border-white/5 cursor-pointer transition-all flex flex-col"
               >
-                <div className="relative aspect-square rounded-xl overflow-hidden mb-4 shadow border border-white/5 bg-obsidian-surface">
-                  <img
-                    alt={pl.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    src={pl.coverUrl}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onPlayPlaylist(pl); }}
-                      className="w-11 h-11 bg-primary-electric text-black rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg cursor-pointer"
-                    >
-                      <Play className="w-5 h-5 fill-current translate-x-0.5" />
-                    </button>
-                  </div>
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-4 shadow border border-white/5 bg-obsidian-surface">
+                <img
+                  alt={pl.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  src={pl.coverUrl}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onPlayPlaylist(pl); }}
+                    className="w-11 h-11 bg-primary-electric text-black rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg cursor-pointer"
+                  >
+                    <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                  </button>
                 </div>
-                <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
-                  {pl.name}
-                </h4>
-                <p className="text-xs text-obsidian-on-surface-variant/55 mt-1 font-sans">
-                  {pl.songIds.length} track{pl.songIds.length !== 1 ? 's' : ''}
-                </p>
               </div>
+              <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
+                {pl.name}
+              </h4>
+              <p className="text-xs text-obsidian-on-surface-variant/55 mt-1 font-sans">
+                {pl.songIds.length} track{pl.songIds.length !== 1 ? 's' : ''}
+              </p>
+            </div>
             ))}
           </div>
         )}

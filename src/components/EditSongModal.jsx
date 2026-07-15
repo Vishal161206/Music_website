@@ -7,14 +7,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Save, Music, Image as ImageIcon, Check, Loader2 } from 'lucide-react';
-import { Song } from '../types';
-
-interface EditSongModalProps {
-  song: Song;
-  isDarkMode: boolean;
-  onClose: () => void;
-  onSave: (updated: Song, newCoverFile: File | null) => void;
-}
 
 const GENRES = [
   'Ambient Electronica', 'Synthwave', 'Lo-Fi Beats', 'Classical Redefined',
@@ -22,20 +14,20 @@ const GENRES = [
   'Electronic', 'Jazz', 'Classical', 'Folk', 'Indie',
 ];
 
-export default function EditSongModal({ song, isDarkMode, onClose, onSave }: EditSongModalProps) {
+export default function EditSongModal({ song, isDarkMode, onClose, onSave }) {
   const [title, setTitle]           = useState(song.title);
   const [artist, setArtist]         = useState(song.artist);
   const [album, setAlbum]           = useState(song.album);
   const [genre, setGenre]           = useState(song.genre);
   const [uploaderName, setUploader] = useState(song.uploaderName || '');
   const [lyricsText, setLyrics]     = useState(song.lyrics.join('\n'));
-  const [imageFile, setImageFile]   = useState<File | null>(null);
-  const [imagePreview, setPreview]  = useState<string>(song.coverUrl);
+  const [imageFile, setImageFile]   = useState(null);
+  const [imagePreview, setPreview]  = useState(song.coverUrl);
   const [saving, setSaving]         = useState(false);
 
-  const imageRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef(null);
   // Track blob URLs to revoke on unmount
-  const blobUrlsRef = useRef<string[]>([]);
+  const blobUrlsRef = useRef([]);
 
   useEffect(() => {
     return () => {
@@ -52,7 +44,7 @@ export default function EditSongModal({ song, isDarkMode, onClose, onSave }: Edi
     isDarkMode ? 'text-obsidian-on-surface-variant/60' : 'text-zinc-500'
   }`;
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageFile(file);
@@ -66,21 +58,21 @@ export default function EditSongModal({ song, isDarkMode, onClose, onSave }: Edi
     setPreview(previewUrl);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!title.trim() || !artist.trim()) return;
     setSaving(true);
 
     const lyricsList = lyricsText.split('\n').map(l => l.trim()).filter(Boolean);
 
-    const updated: Song = {
+    const updated = {
       ...song,
       title:        title.trim(),
       artist:       artist.trim(),
       album:        album.trim() || 'Single Release',
       genre,
       uploaderName: uploaderName.trim() || song.uploaderName,
-      // coverUrl will be resolved by App.tsx handleEditSong (local blob or cloud upload)
+      // coverUrl will be resolved by App.jsx handleEditSong (local blob or cloud upload)
       coverUrl:     imageFile ? imagePreview : song.coverUrl,
       lyrics:       lyricsList.length > 0 ? lyricsList : song.lyrics,
     };

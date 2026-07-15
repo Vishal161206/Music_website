@@ -14,22 +14,6 @@ import {
   Plus,
   Pencil
 } from 'lucide-react';
-import { Playlist, Song } from '../types';
-
-interface LibraryViewProps {
-  playlists: Playlist[];
-  songs: Song[];
-  onPlaySong: (song: Song) => void;
-  onPlayPlaylist: (playlist: Playlist) => void;
-  onViewPlaylist: (playlist: Playlist) => void;
-  activeSongId: string;
-  onToggleLike: (songId: string) => void;
-  likedSongIds: string[];
-  onAddSongClicked: () => void;
-  onDeleteSong: (songId: string) => void;
-  onEditSong: (song: Song) => void;
-  onDeletePlaylist: (playlistId: string) => void;
-}
 
 export default function LibraryView({
   playlists,
@@ -44,14 +28,14 @@ export default function LibraryView({
   onDeleteSong,
   onEditSong,
   onDeletePlaylist,
-}: LibraryViewProps) {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'playlists' | 'artists' | 'liked'>('all');
+}) {
+  const [activeFilter, setActiveFilter] = useState('all');
   const [libSearch, setLibSearch] = useState('');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmDeletePlaylistId, setConfirmDeletePlaylistId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeletePlaylistId, setConfirmDeletePlaylistId] = useState(null);
 
   // Handle playing song by clicking row
-  const handleRowClick = (song: Song) => {
+  const handleRowClick = (song) => {
     onPlaySong(song);
   };
 
@@ -73,14 +57,14 @@ export default function LibraryView({
           name: song.artist,
           image: song.coverUrl,
           tracksCount: 1,
-          type: 'Followed Artist' as const,
+          type: 'Followed Artist',
         });
       } else {
-        const entry = map.get(song.artist)!;
+        const entry = map.get(song.artist);
         entry.tracksCount += 1;
       }
       return map;
-    }, new Map<string, { id: string; name: string; image: string; tracksCount: number; type: 'Followed Artist' }>())
+    }, new Map())
     .values()
   );
 
@@ -190,51 +174,51 @@ export default function LibraryView({
                 onClick={() => onViewPlaylist(playlist)}
                 className="group p-4 bg-obsidian-container-low/60 hover:bg-obsidian-container-high/80 rounded-2xl border border-white/5 cursor-pointer transition-all relative"
               >
-                <div className="relative aspect-square rounded-xl overflow-hidden mb-4 shadow border border-white/5">
-                  <img 
-                    alt={playlist.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src={playlist.coverUrl}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 animate-fade-in">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPlayPlaylist(playlist);
-                      }}
-                      className="w-12 h-12 bg-primary-electric text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg cursor-pointer"
-                    >
-                      <Play className="w-5 h-5 fill-current text-black translate-x-0.5" />
-                    </button>
-                  </div>
-                  {/* Delete playlist button */}
-                  <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
-                    {confirmDeletePlaylistId === playlist.id ? (
-                      <button
-                        onClick={() => { onDeletePlaylist(playlist.id); setConfirmDeletePlaylistId(null); }}
-                        className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white animate-pulse cursor-pointer shadow"
-                        title="Confirm delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeletePlaylistId(playlist.id)}
-                        className="w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                        title="Delete playlist"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-4 shadow border border-white/5">
+                <img 
+                  alt={playlist.name} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  src={playlist.coverUrl}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 animate-fade-in">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlayPlaylist(playlist);
+                    }}
+                    className="w-12 h-12 bg-primary-electric text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg cursor-pointer"
+                  >
+                    <Play className="w-5 h-5 fill-current text-black translate-x-0.5" />
+                  </button>
                 </div>
-                <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
-                  {playlist.name}
-                </h4>
-                <p className="text-xs text-obsidian-on-surface-variant/40 mt-1 font-medium truncate">
-                  {playlist.songIds.length} tracks · Private
-                </p>
+                {/* Delete playlist button */}
+                <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
+                  {confirmDeletePlaylistId === playlist.id ? (
+                    <button
+                      onClick={() => { onDeletePlaylist(playlist.id); setConfirmDeletePlaylistId(null); }}
+                      className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white animate-pulse cursor-pointer shadow"
+                      title="Confirm delete"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeletePlaylistId(playlist.id)}
+                      className="w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                      title="Delete playlist"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
+              <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
+                {playlist.name}
+              </h4>
+              <p className="text-xs text-obsidian-on-surface-variant/40 mt-1 font-medium truncate">
+                {playlist.songIds.length} tracks · Private
+              </p>
+            </div>
             ))}
 
             {/* Followed Artists listing */}
@@ -243,21 +227,21 @@ export default function LibraryView({
                 key={artist.id}
                 className="group p-4 bg-obsidian-container-low/60 hover:bg-obsidian-container-high/80 rounded-2xl border border-white/5 cursor-pointer transition-all text-center"
               >
-                <div className="relative aspect-square rounded-full overflow-hidden mb-4 w-3/4 mx-auto shadow border border-white/5 bg-obsidian-base">
-                  <img 
-                    alt={artist.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src={artist.image}
-                  />
-                </div>
-                <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
-                  {artist.name}
-                </h4>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-emerald/10 text-[10px] text-secondary-emerald font-semibold font-mono mt-2">
-                  <Disc className="w-3 h-3 animate-spin duration-3000" />
-                  <span>{artist.type}</span>
-                </div>
+              <div className="relative aspect-square rounded-full overflow-hidden mb-4 w-3/4 mx-auto shadow border border-white/5 bg-obsidian-base">
+                <img 
+                  alt={artist.name} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  src={artist.image}
+                />
               </div>
+              <h4 className="font-sans font-bold text-sm text-obsidian-on-surface group-hover:text-primary-electric truncate">
+                {artist.name}
+              </h4>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-emerald/10 text-[10px] text-secondary-emerald font-semibold font-mono mt-2">
+                <Disc className="w-3 h-3 animate-spin duration-3000" />
+                <span>{artist.type}</span>
+              </div>
+            </div>
             ))}
           </div>
         </div>

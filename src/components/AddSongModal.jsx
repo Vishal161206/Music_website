@@ -23,17 +23,7 @@ import {
   AlertCircle,
   Info,
 } from 'lucide-react';
-import { Song } from '../types';
 import { uploadAudioToDrive, uploadCoverToDrive, isDriveConfigured } from '../services/driveService';
-
-interface AddSongModalProps {
-  onClose: () => void;
-  onAdd: (song: Song) => void;
-  isDarkMode: boolean;
-  isCloudMode: boolean;
-  uploaderId: string;
-  uploaderDisplayName: string;
-}
 
 const GENRES = [
   'Ambient Electronica', 'Synthwave', 'Lo-Fi Beats', 'Classical Redefined',
@@ -51,7 +41,7 @@ export default function AddSongModal({
   isCloudMode,
   uploaderId,
   uploaderDisplayName,
-}: AddSongModalProps) {
+}) {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [album, setAlbum] = useState('');
@@ -59,19 +49,19 @@ export default function AddSongModal({
   const [uploaderName, setUploaderName] = useState(uploaderDisplayName);
   const [lyricsText, setLyricsText] = useState('');
 
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [audioFile, setAudioFile] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadPhase, setUploadPhase] = useState<'idle' | 'encoding' | 'uploading-audio' | 'uploading-cover' | 'saving' | 'done'>('idle');
+  const [uploadPhase, setUploadPhase] = useState('idle');
   const [audioProgress, setAudioProgress] = useState(0);
   const [coverProgress, setCoverProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState(null);
 
-  const audioInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const blobUrlsRef = useRef<string[]>([]);
+  const audioInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const blobUrlsRef = useRef([]);
 
   useEffect(() => {
     return () => {
@@ -88,7 +78,7 @@ export default function AddSongModal({
     isDarkMode ? 'text-obsidian-on-surface-variant/60' : 'text-zinc-500'
   }`;
 
-  const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -109,7 +99,7 @@ export default function AddSongModal({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
@@ -127,7 +117,7 @@ export default function AddSongModal({
     setImagePreview(previewUrl);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !artist.trim() || !audioFile) return;
 
@@ -147,8 +137,8 @@ export default function AddSongModal({
     }
 
     try {
-      let audioUrl: string;
-      let coverUrl: string;
+      let audioUrl;
+      let coverUrl;
 
       if (isCloudMode && isDriveConfigured) {
         // ── Upload audio to Google Drive ──────────────────────────────
@@ -183,7 +173,7 @@ export default function AddSongModal({
       }
 
       // ── Extract duration from the audio file ──────────────────────
-      const durationInfo = await new Promise<{ durationSec: number; duration: string }>((resolve) => {
+      const durationInfo = await new Promise((resolve) => {
         const audioEl = new Audio();
         // Use the original file as a blob URL just to read metadata
         const tempUrl = URL.createObjectURL(audioFile);
@@ -201,7 +191,7 @@ export default function AddSongModal({
         });
       });
 
-      const newSong: Song = {
+      const newSong = {
         id: songId,
         title: title.trim(),
         artist: artist.trim(),
@@ -221,7 +211,7 @@ export default function AddSongModal({
 
       setUploadPhase('done');
       onAdd(newSong);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('[AddSongModal] Upload failed:', err);
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
@@ -231,7 +221,7 @@ export default function AddSongModal({
   };
 
   // Human-readable phase labels
-  const phaseLabel: Record<typeof uploadPhase, string> = {
+  const phaseLabel = {
     idle: '',
     encoding: 'Encoding audio file…',
     'uploading-audio': 'Uploading to Google Drive…',
