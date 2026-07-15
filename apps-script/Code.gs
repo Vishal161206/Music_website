@@ -12,7 +12,7 @@ var FOLDER_NAME = "SonicObsidian";
 // ── Change this to any random string before deploying ─────────────────────────
 // Set the SAME value in your .env file: VITE_DRIVE_SECRET=your_secret_here
 // WARNING: Do NOT commit a real secret to GitHub. Keep it private.
-var SECRET_TOKEN = "m09auc9uy3qancvishalcu9034uanand34mu43";
+var SECRET_TOKEN = "A Secret Key";
 
 
 /**
