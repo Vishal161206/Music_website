@@ -17,6 +17,7 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
+  X,
 } from 'lucide-react';
 import { Song } from '../types';
 
@@ -39,6 +40,7 @@ interface BottomPlayerProps {
   onSkipNext: () => void;
   onSkipPrev: () => void;
   onOpenFullscreen: () => void;
+  onClose: () => void;
 }
 
 export default function BottomPlayer({
@@ -60,6 +62,7 @@ export default function BottomPlayer({
   onSkipNext,
   onSkipPrev,
   onOpenFullscreen,
+  onClose,
 }: BottomPlayerProps) {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -266,6 +269,14 @@ export default function BottomPlayer({
             title="Enter Fullscreen"
           >
             <Maximize2 className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={onClose}
+            className="hover:text-red-400 transition-all hover:scale-110 cursor-pointer ml-1"
+            title="Close Player"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>

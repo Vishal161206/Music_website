@@ -78,22 +78,44 @@ export default function App() {
   // Fix: use a ref to always call the latest handleAutoNext from the 'ended' listener
   const handleAutoNextRef = useRef<() => void>(() => {});
 
+  // Ref to track the desired play state for the canplay handler
+  const wantsToPlayRef = useRef<boolean>(false);
+
   // Create audio element once
   useEffect(() => {
     const audio = new Audio();
-    audio.preload = 'metadata';
+    audio.preload = 'auto';
     audioRef.current = audio;
 
     // The onEnded listener calls via ref so it always gets the latest version
     const onTimeUpdate = () => setProgress(Math.floor(audio.currentTime));
     const onEnded = () => handleAutoNextRef.current();
 
+    // When audio is ready to play, auto-play if the user intended to play
+    const onCanPlay = () => {
+      if (wantsToPlayRef.current) {
+        audio.play().catch(() => {
+          setIsPlaying(false);
+        });
+      }
+    };
+
+    // Handle load errors (e.g. Google Drive redirect failures)
+    const onError = () => {
+      console.error('[SonicObsidian] Audio load error:', audio.error?.message);
+      setIsPlaying(false);
+    };
+
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('error', onError);
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('error', onError);
       audio.pause();
     };
   }, []);
@@ -104,24 +126,31 @@ export default function App() {
     if (!audio || !currentSong) return;
 
     if (currentSong.audioUrl) {
-      if (audio.src !== currentSong.audioUrl) {
-        audio.src = currentSong.audioUrl;
-        audio.load();
-      }
+      // Always reset and reload when song changes
+      audio.pause();
+      audio.src = currentSong.audioUrl;
+      audio.load();
+      // canplay listener will call play() if wantsToPlayRef is true
     } else {
+      audio.pause();
       audio.src = '';
     }
     setProgress(0);
   }, [currentSong?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync play/pause state
+  // Sync play/pause state — only directly play/pause when audio is already loaded
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    wantsToPlayRef.current = isPlaying;
     if (isPlaying && currentSong?.audioUrl) {
-      audio.play().catch(() => {
-        setIsPlaying(false);
-      });
+      // Only call play() directly if the audio is already loaded (readyState >= 3)
+      // Otherwise, the canplay listener will handle it when the buffer is ready
+      if (audio.readyState >= 3) {
+        audio.play().catch(() => {
+          setIsPlaying(false);
+        });
+      }
     } else {
       audio.pause();
     }
@@ -494,6 +523,22 @@ export default function App() {
     setProgress(seconds);
   }, [currentSong?.audioUrl]);
 
+  // Close handler — clears the current song and stops playback entirely
+  const handleClosePlayer = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = '';
+    }
+    wantsToPlayRef.current = false;
+    setCurrentSong(null);
+    setIsPlaying(false);
+    setProgress(0);
+    if (activeScreen === 'now-playing') {
+      setActiveScreen('home');
+    }
+  }, [activeScreen]);
+
   // ── Search ─────────────────────────────────────────────────────────────
   const globalFilteredSongs = songs.filter((song) =>
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -680,6 +725,7 @@ export default function App() {
           onSkipNext={skipNext}
           onSkipPrev={skipPrev}
           onOpenFullscreen={() => setActiveScreen('now-playing')}
+          onClose={handleClosePlayer}
         />
       )}
 

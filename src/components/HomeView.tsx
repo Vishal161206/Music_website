@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
-import { Play, Music, PlusSquare, Upload, ChevronRight, User, Pencil, Trash2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Play, Music, PlusSquare, Upload, ChevronRight, ChevronLeft, User, Pencil, Trash2, Filter, X } from 'lucide-react';
 import { Song, Playlist } from '../types';
 
 interface HomeViewProps {
@@ -35,8 +35,68 @@ export default function HomeView({
   const [visualizerHeights, setVisualizerHeights] = useState<number[]>(
     [40, 70, 50, 90, 30, 80, 45, 60, 35, 75, 55, 95]
   );
-  const [showAllSongs, setShowAllSongs] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  const SONGS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // ── Filters ─────────────────────────────────────────────────────────────────
+  const [filterGenre, setFilterGenre] = useState('');
+  const [filterAlbum, setFilterAlbum] = useState('');
+  const [filterArtist, setFilterArtist] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const hasActiveFilters = filterGenre || filterAlbum || filterArtist;
+
+  // Extract unique filter options from songs
+  const uniqueGenres = useMemo(() => {
+    const set = new Set(songs.map(s => s.genre).filter(Boolean));
+    return Array.from(set).sort();
+  }, [songs]);
+
+  const uniqueAlbums = useMemo(() => {
+    const set = new Set(songs.map(s => s.album).filter(Boolean));
+    return Array.from(set).sort();
+  }, [songs]);
+
+  const uniqueArtists = useMemo(() => {
+    const set = new Set(songs.map(s => s.artist).filter(Boolean));
+    return Array.from(set).sort();
+  }, [songs]);
+
+  // Apply filters
+  const filteredSongs = useMemo(() => {
+    return songs.filter(song => {
+      if (filterGenre && song.genre !== filterGenre) return false;
+      if (filterAlbum && song.album !== filterAlbum) return false;
+      if (filterArtist && song.artist !== filterArtist) return false;
+      return true;
+    });
+  }, [songs, filterGenre, filterAlbum, filterArtist]);
+
+  // Paginate filtered results
+  const totalPages = Math.max(1, Math.ceil(filteredSongs.length / SONGS_PER_PAGE));
+  const paginatedSongs = filteredSongs.slice(
+    (currentPage - 1) * SONGS_PER_PAGE,
+    currentPage * SONGS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterGenre, filterAlbum, filterArtist]);
+
+  // Clamp page if songs list shrinks
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const clearAllFilters = () => {
+    setFilterGenre('');
+    setFilterAlbum('');
+    setFilterArtist('');
+  };
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -45,7 +105,6 @@ export default function HomeView({
     return () => clearInterval(id);
   }, []);
 
-  const displayedSongs = showAllSongs ? songs : songs.slice(0, 6);
   const showBannerPlaylist = playlists.length > 0 ? playlists[0] : null;
 
   return (
@@ -137,25 +196,116 @@ export default function HomeView({
 
       {/* ── Song Library ─────────────────────────────────────────────────── */}
       <section>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="font-display text-2xl font-bold text-obsidian-on-surface tracking-tight">
             All Songs
           </h3>
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-primary-electric uppercase">
-              {songs.length} tracks
+              {filteredSongs.length} track{filteredSongs.length !== 1 ? 's' : ''}
+              {hasActiveFilters && ` (filtered from ${songs.length})`}
             </span>
-            {songs.length > 6 && (
-              <button
-                onClick={() => setShowAllSongs((v) => !v)}
-                className="flex items-center gap-1 text-xs font-semibold text-obsidian-on-surface-variant/60 hover:text-white cursor-pointer transition-colors"
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                showFilters || hasActiveFilters
+                  ? 'bg-primary-electric/15 text-primary-electric border-primary-electric/30'
+                  : 'bg-obsidian-container-low text-obsidian-on-surface-variant/60 hover:text-white border-white/5 hover:border-white/15'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              Filters
+              {hasActiveFilters && (
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary-emerald" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Filter Bar ─────────────────────────────────────────────────── */}
+        {showFilters && (
+          <div className="flex flex-wrap items-end gap-3 mb-5 p-4 rounded-2xl bg-obsidian-container-low/60 border border-white/5 animate-fade-in">
+            {/* Genre */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-obsidian-on-surface-variant/40 uppercase tracking-wider">Genre</label>
+              <select
+                value={filterGenre}
+                onChange={(e) => setFilterGenre(e.target.value)}
+                className="bg-obsidian-container-high border border-white/10 text-obsidian-on-surface text-xs rounded-lg px-3 py-2 min-w-[140px] focus:outline-none focus:border-primary-electric/50 cursor-pointer appearance-none"
               >
-                {showAllSongs ? 'Show Less' : 'See All'}
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllSongs ? 'rotate-90' : ''}`} />
+                <option value="">All Genres</option>
+                {uniqueGenres.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+
+            {/* Album */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-obsidian-on-surface-variant/40 uppercase tracking-wider">Album</label>
+              <select
+                value={filterAlbum}
+                onChange={(e) => setFilterAlbum(e.target.value)}
+                className="bg-obsidian-container-high border border-white/10 text-obsidian-on-surface text-xs rounded-lg px-3 py-2 min-w-[140px] focus:outline-none focus:border-primary-electric/50 cursor-pointer appearance-none"
+              >
+                <option value="">All Albums</option>
+                {uniqueAlbums.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+
+            {/* Artist */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-obsidian-on-surface-variant/40 uppercase tracking-wider">Artist</label>
+              <select
+                value={filterArtist}
+                onChange={(e) => setFilterArtist(e.target.value)}
+                className="bg-obsidian-container-high border border-white/10 text-obsidian-on-surface text-xs rounded-lg px-3 py-2 min-w-[140px] focus:outline-none focus:border-primary-electric/50 cursor-pointer appearance-none"
+              >
+                <option value="">All Artists</option>
+                {uniqueArtists.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+
+            {/* Clear all */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                Clear Filters
               </button>
             )}
           </div>
-        </div>
+        )}
+
+        {/* Active filter chips (shown even when filter panel is closed) */}
+        {hasActiveFilters && !showFilters && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {filterGenre && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-primary-electric/10 text-primary-electric border border-primary-electric/20">
+                Genre: {filterGenre}
+                <button onClick={() => setFilterGenre('')} className="hover:text-white cursor-pointer"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {filterAlbum && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-secondary-emerald/10 text-secondary-emerald border border-secondary-emerald/20">
+                Album: {filterAlbum}
+                <button onClick={() => setFilterAlbum('')} className="hover:text-white cursor-pointer"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {filterArtist && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-primary-electric/10 text-primary-electric border border-primary-electric/20">
+                Artist: {filterArtist}
+                <button onClick={() => setFilterArtist('')} className="hover:text-white cursor-pointer"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            <button
+              onClick={clearAllFilters}
+              className="text-[11px] text-obsidian-on-surface-variant/40 hover:text-red-400 cursor-pointer transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
 
         {songs.length === 0 ? (
           /* Empty state — no songs uploaded yet */
@@ -177,10 +327,25 @@ export default function HomeView({
               Upload First Song
             </button>
           </div>
+        ) : filteredSongs.length === 0 ? (
+          /* Empty filter result */
+          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border border-dashed border-white/5 rounded-2xl bg-obsidian-container-low/30">
+            <Filter className="w-10 h-10 text-obsidian-on-surface-variant/30" />
+            <div className="space-y-1">
+              <h4 className="font-sans font-bold text-base text-obsidian-on-surface">No songs match your filters</h4>
+              <p className="text-xs text-obsidian-on-surface-variant/50">Try adjusting or clearing filters to see more songs.</p>
+            </div>
+            <button
+              onClick={clearAllFilters}
+              className="px-5 py-2 rounded-full text-xs font-bold bg-primary-electric/15 text-primary-electric hover:bg-primary-electric/25 transition-all cursor-pointer"
+            >
+              Clear All Filters
+            </button>
+          </div>
         ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+        <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
           {/* Upload CTA card */}
-
           <div
             onClick={onOpenAddSong}
             className="group relative bg-obsidian-container-low p-4 rounded-xl transition-all duration-300 hover:bg-primary-electric/10 hover:border-primary-electric/30 cursor-pointer shadow-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-3 aspect-square"
@@ -191,7 +356,7 @@ export default function HomeView({
             <p className="text-xs font-bold text-primary-electric text-center leading-tight">Upload Your Song</p>
           </div>
 
-          {displayedSongs.map((song) => {
+          {paginatedSongs.map((song) => {
             const isActive = activeSongId === song.id;
             const isConfirming = confirmDeleteId === song.id;
             return (
@@ -273,6 +438,11 @@ export default function HomeView({
                 <p className="font-sans text-xs text-obsidian-on-surface-variant/40 mt-0.5 truncate">
                   {song.artist}
                 </p>
+                {song.genre && (
+                  <p className="text-[9px] text-secondary-emerald/50 font-mono mt-0.5 truncate">
+                    {song.genre}
+                  </p>
+                )}
                 {song.uploaderName && (
                   <p className="text-[9px] text-primary-electric/50 font-mono mt-0.5 truncate">
                     by {song.uploaderName}
@@ -282,6 +452,80 @@ export default function HomeView({
             );
           })}
         </div>
+
+        {/* ── Pagination Controls ─────────────────────────────────────────── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-8 select-none">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                currentPage === 1
+                  ? 'text-obsidian-on-surface-variant/20 border-white/5 cursor-not-allowed'
+                  : 'text-white hover:bg-primary-electric/15 hover:text-primary-electric border-white/10 hover:border-primary-electric/30 cursor-pointer'
+              }`}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Prev
+            </button>
+
+            {/* Page number buttons */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  // Show first, last, current, and neighbors
+                  if (page === 1 || page === totalPages) return true;
+                  if (Math.abs(page - currentPage) <= 1) return true;
+                  return false;
+                })
+                .reduce<(number | 'ellipsis')[]>((acc, page, idx, arr) => {
+                  if (idx > 0 && typeof arr[idx - 1] === 'number' && page - (arr[idx - 1] as number) > 1) {
+                    acc.push('ellipsis');
+                  }
+                  acc.push(page);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === 'ellipsis' ? (
+                    <span key={`e-${idx}`} className="px-2 text-obsidian-on-surface-variant/30 text-xs">…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setCurrentPage(item as number)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === item
+                          ? 'bg-primary-electric text-black shadow-lg'
+                          : 'text-obsidian-on-surface-variant/60 hover:text-white hover:bg-obsidian-container-high'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                currentPage === totalPages
+                  ? 'text-obsidian-on-surface-variant/20 border-white/5 cursor-not-allowed'
+                  : 'text-white hover:bg-primary-electric/15 hover:text-primary-electric border-white/10 hover:border-primary-electric/30 cursor-pointer'
+              }`}
+            >
+              Next
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Page info text */}
+        {totalPages > 1 && (
+          <p className="text-center text-[11px] text-obsidian-on-surface-variant/30 mt-3 font-mono">
+            Showing {(currentPage - 1) * SONGS_PER_PAGE + 1}–{Math.min(currentPage * SONGS_PER_PAGE, filteredSongs.length)} of {filteredSongs.length} songs
+          </p>
+        )}
+        </>
         )}
       </section>
 

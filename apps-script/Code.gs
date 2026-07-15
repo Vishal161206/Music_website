@@ -23,7 +23,7 @@ var FOLDER_NAME  = "SonicObsidian";
 
 // ── Change this to any random string, e.g. "sonic_k9x2mP" ────────────────────
 // Set the SAME value in your .env: VITE_DRIVE_SECRET=your_secret_here
-var SECRET_TOKEN = "A Secrte Key";
+var SECRET_TOKEN = "m09auc9uy3qancvishalcu9034uanand34mu43";
 
 
 /**
