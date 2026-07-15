@@ -2,7 +2,7 @@
 
 # 🎵 SonicObsidian
 
-**A premium, dark-themed music streaming web app with private playlists and cloud-powered uploads.**
+**A premium, dark-themed music hearing web app with private playlists and cloud-powered uploads.**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)

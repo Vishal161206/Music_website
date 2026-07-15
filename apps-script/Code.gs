@@ -1,17 +1,5 @@
 /**
- * SonicObsidian — Google Drive Upload Proxy
- * ─────────────────────────────────────────────────────────────────────────────
- * HOW TO DEPLOY (one-time setup, ~5 minutes):
- *
- *  1. Go to https://script.google.com → New Project
- *  2. Replace the default code with this entire file
- *  3. Click "Deploy" → "New Deployment"
- *  4. Type: Web App
- *  5. Execute as: Me
- *  6. Who has access: Anyone   ← MUST be "Anyone" (not "Google account")
- *     Reason: your website makes plain HTTP requests with no Google login.
- *  7. Click "Deploy" → copy the Web App URL
- *  8. Paste that URL into your .env as VITE_APPS_SCRIPT_URL=...
+
  *
  * Security: A secret token (SECRET_TOKEN below) prevents random people from
  * uploading to your Drive even if they find the URL. Set the same value in
@@ -21,9 +9,10 @@
 
 var FOLDER_NAME  = "SonicObsidian";
 
-// ── Change this to any random string, e.g. "sonic_k9x2mP" ────────────────────
-// Set the SAME value in your .env: VITE_DRIVE_SECRET=your_secret_here
-var SECRET_TOKEN = "m09auc9uy3qancvishalcu9034uanand34mu43";
+// ── Change this to any random string before deploying ─────────────────────────
+// Set the SAME value in your .env file: VITE_DRIVE_SECRET=your_secret_here
+// WARNING: Do NOT commit a real secret to GitHub. Keep it private.
+var SECRET_TOKEN = "CHANGE_ME_BEFORE_DEPLOYING";
 
 
 /**
