@@ -27,7 +27,7 @@ import {
   deleteSongFromFirestoreAndStorage,
   deletePlaylistFromFirestore,
 } from './services/songService';
-import { uploadCoverToDrive, isDriveConfigured } from './services/driveService';
+import { uploadCoverToDrive, isDriveConfigured, isDriveUrl, fetchAudioBlobUrl } from './services/driveService';
 import { isFirebaseConfigured } from './firebase';
 import { useAuth } from './contexts/AuthContext';
 
@@ -127,9 +127,28 @@ export default function App() {
     if (currentSong.audioUrl) {
       // Always reset and reload when song changes
       audio.pause();
-      audio.src = currentSong.audioUrl;
-      audio.load();
-      // canplay listener will call play() if wantsToPlayRef is true
+
+      // Google Drive URLs can't be played directly by <audio> — they return
+      // HTML redirects instead of raw audio bytes. We proxy through our Apps
+      // Script which fetches the file, returns base64, and we decode it to
+      // a local blob URL that the browser can play natively.
+      if (isDriveUrl(currentSong.audioUrl)) {
+        fetchAudioBlobUrl(currentSong.audioUrl)
+          .then((blobUrl) => {
+            audio.src = blobUrl;
+            audio.load();
+          })
+          .catch((err) => {
+            console.error('[SonicObsidian] Audio proxy failed:', err);
+            // Fallback: try the direct URL anyway (may work for small files)
+            audio.src = currentSong.audioUrl;
+            audio.load();
+          });
+      } else {
+        // Local blob URLs, data URLs, etc. — play directly
+        audio.src = currentSong.audioUrl;
+        audio.load();
+      }
     } else {
       audio.pause();
       audio.src = '';

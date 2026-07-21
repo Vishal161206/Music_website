@@ -15,8 +15,8 @@
  */
 
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL;
-const DRIVE_SECRET     = import.meta.env.VITE_DRIVE_SECRET;
-const DRIVE_FOLDER_ID  = import.meta.env.VITE_DRIVE_FOLDER_ID;
+const DRIVE_SECRET = import.meta.env.VITE_DRIVE_SECRET;
+const DRIVE_FOLDER_ID = import.meta.env.VITE_DRIVE_FOLDER_ID;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -197,3 +197,111 @@ export async function uploadCoverToDrive(file, songId, onProgress) {
  * Check if Google Drive uploads are configured (Apps Script URL is set).
  */
 export const isDriveConfigured = !!APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
+
+
+// ─── Audio Streaming Proxy ───────────────────────────────────────────────────
+// Google Drive URLs (uc?export=download) don't work directly as <audio> src
+// because Google returns redirects and HTML pages instead of raw audio data.
+// This proxy fetches the file through our Apps Script (which CAN access the
+// Drive file) and returns it as base64 JSON. We then decode it into a blob URL
+// that the browser's <audio> element can play natively.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Cache of blob URLs keyed by Google Drive file ID — avoids re-downloading. */
+const audioBlobCache = new Map();
+
+/**
+ * Extract the Google Drive file ID from various URL formats.
+ * Returns null if the URL is not a recognized Drive URL.
+ */
+function extractDriveFileId(url) {
+  if (!url) return null;
+  // Format: ...?mode=stream&id=FILE_ID  (our proxy URL)
+  const matchProxy = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchProxy) return matchProxy[1];
+  // Format: https://drive.google.com/uc?export=download&id=FILE_ID
+  const matchUc = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchUc) return matchUc[1];
+  // Format: https://drive.google.com/file/d/FILE_ID/...
+  const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchPath) return matchPath[1];
+  return null;
+}
+
+/**
+ * Check if a URL is a Google Drive URL that needs proxying.
+ * Local blob: URLs and data: URLs don't need proxying.
+ */
+export function isDriveUrl(url) {
+  if (!url) return false;
+  return (
+    url.includes('drive.google.com') ||
+    url.includes('drive.usercontent.google.com') ||
+    url.includes('mode=stream')
+  );
+}
+
+/**
+ * Fetch an audio file from Google Drive through the Apps Script proxy,
+ * decode the base64 response, and return a blob URL that <audio> can play.
+ *
+ * Results are cached by file ID so replaying a song doesn't re-download it.
+ *
+ * @param {string} driveUrl — A Google Drive URL or proxy URL containing a file ID
+ * @returns {Promise<string>} — A blob: URL that the browser can play
+ */
+export async function fetchAudioBlobUrl(driveUrl) {
+  const fileId = extractDriveFileId(driveUrl);
+  if (!fileId) {
+    throw new Error('Could not extract file ID from URL: ' + driveUrl);
+  }
+
+  // Return cached blob URL if available
+  if (audioBlobCache.has(fileId)) {
+    return audioBlobCache.get(fileId);
+  }
+
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    throw new Error('VITE_APPS_SCRIPT_URL is not configured — cannot proxy audio.');
+  }
+
+  const proxyUrl = `${APPS_SCRIPT_URL}?mode=stream&id=${fileId}`;
+
+  console.log('[SonicObsidian] Fetching audio via proxy for file:', fileId);
+
+  const response = await fetch(proxyUrl, { redirect: 'follow' });
+
+  if (!response.ok) {
+    throw new Error(`Proxy returned HTTP ${response.status}`);
+  }
+
+  const json = await response.json();
+
+  if (!json.success) {
+    throw new Error(json.error || 'Proxy returned failure');
+  }
+
+  // Safely decode Base64 into Uint8Array without blowing up memory
+  const binaryString = atob(json.data);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  // Create Object URL from binary blob
+  const blob = new Blob([bytes.buffer], { type: json.mimeType || 'audio/mpeg' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  // Cache for re-plays during session
+  audioBlobCache.set(fileId, blobUrl);
+
+  console.log(
+    '[SonicObsidian] Audio proxied successfully:',
+    json.fileName,
+    `(${(json.size / 1024 / 1024).toFixed(1)} MB)`
+  );
+
+  return blobUrl;
+}
