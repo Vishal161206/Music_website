@@ -305,3 +305,47 @@ export async function fetchAudioBlobUrl(driveUrl) {
 
   return blobUrl;
 }
+
+
+// ─── Pre-warm & Pre-fetch ────────────────────────────────────────────────────
+
+/**
+ * Send a lightweight GET to the Apps Script to wake up the instance.
+ * Google Apps Script has a "cold start" (~2-5s) the first time it runs.
+ * Calling this on app mount ensures the instance is warm when the user
+ * clicks play for the first time.
+ */
+export function prewarmProxy() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+
+  fetch(APPS_SCRIPT_URL, { redirect: 'follow' })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log('[SonicObsidian] Proxy pre-warmed:', data.status || 'OK');
+    })
+    .catch(() => {
+      // Silently ignore — this is a best-effort optimization
+    });
+}
+
+/**
+ * Silently pre-fetch a song's audio and cache the blob URL.
+ * If it's already cached, returns immediately. Errors are swallowed
+ * since this is a speculative optimization — the user hasn't clicked
+ * this song yet.
+ *
+ * @param {string} audioUrl — The Google Drive audio URL to pre-fetch
+ * @returns {Promise<void>}
+ */
+export async function prefetchAudioBlobUrl(audioUrl) {
+  if (!audioUrl || !isDriveUrl(audioUrl)) return;
+
+  const fileId = extractDriveFileId(audioUrl);
+  if (!fileId || audioBlobCache.has(fileId)) return; // Already cached
+
+  try {
+    await fetchAudioBlobUrl(audioUrl);
+  } catch {
+    // Swallow errors — pre-fetch is best-effort
+  }
+}

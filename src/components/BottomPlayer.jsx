@@ -18,11 +18,13 @@ import {
   VolumeX,
   Maximize2,
   X,
+  Loader2,
 } from 'lucide-react';
 
 export default function BottomPlayer({
   currentSong,
   isPlaying,
+  isBuffering,
   onTogglePlay,
   progress,
   onSeek,
@@ -130,7 +132,13 @@ export default function BottomPlayer({
             <p className="font-sans text-xs text-obsidian-on-surface-variant/60 truncate mt-0.5">
               {currentSong.artist}
             </p>
-            {!hasSrc && (
+            {isBuffering && (
+              <span className="text-[9px] text-primary-electric/80 font-mono flex items-center gap-1 mt-0.5">
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                Loading audio…
+              </span>
+            )}
+            {!hasSrc && !isBuffering && (
               <span className="text-[9px] text-primary-electric/60 font-mono">DEMO — no audio file</span>
             )}
           </div>
@@ -163,10 +171,17 @@ export default function BottomPlayer({
 
             <button
               onClick={onTogglePlay}
-              className="w-10 h-10 md:w-12 md:h-12 bg-white text-black hover:bg-primary-electric rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer"
-              title={isPlaying ? 'Pause' : 'Play'}
+              disabled={isBuffering}
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer ${
+                isBuffering
+                  ? 'bg-white/20 text-white/60'
+                  : 'bg-white text-black hover:bg-primary-electric hover:scale-110 active:scale-95'
+              }`}
+              title={isBuffering ? 'Loading...' : isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? (
+              {isBuffering ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : isPlaying ? (
                 <Pause className="w-4 h-4 md:w-5 md:h-5 fill-current" />
               ) : (
                 <Play className="w-4 h-4 md:w-5 md:h-5 fill-current translate-x-0.5" />

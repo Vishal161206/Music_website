@@ -27,7 +27,7 @@ import {
   deleteSongFromFirestoreAndStorage,
   deletePlaylistFromFirestore,
 } from './services/songService';
-import { uploadCoverToDrive, isDriveConfigured, isDriveUrl, fetchAudioBlobUrl } from './services/driveService';
+import { uploadCoverToDrive, isDriveConfigured, isDriveUrl, fetchAudioBlobUrl, prewarmProxy, prefetchAudioBlobUrl } from './services/driveService';
 import { isFirebaseConfigured } from './firebase';
 import { useAuth } from './contexts/AuthContext';
 
@@ -69,6 +69,7 @@ export default function App() {
   const [activeNotification, setActiveNotification] = useState(null);
   const [history, setHistory] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const isCloudMode = isFirebaseConfigured;
 
   // ── Real <audio> element ref ───────────────────────────────────────────
@@ -92,6 +93,7 @@ export default function App() {
 
     // When audio is ready to play, auto-play if the user intended to play
     const onCanPlay = () => {
+      setIsBuffering(false); // Audio is ready — clear loading state
       if (wantsToPlayRef.current) {
         audio.play().catch(() => {
           setIsPlaying(false);
@@ -103,12 +105,19 @@ export default function App() {
     const onError = () => {
       console.error('[SonicObsidian] Audio load error:', audio.error?.message);
       setIsPlaying(false);
+      setIsBuffering(false);
     };
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('canplay', onCanPlay);
     audio.addEventListener('error', onError);
+
+    // ── Pre-warm the Apps Script proxy on app mount ─────────────────────
+    // Google Apps Script has a cold-start delay (~2-5s) when the instance
+    // hasn't been used recently. This ping wakes it up in the background
+    // so the first play click is faster.
+    prewarmProxy();
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate);
@@ -127,6 +136,7 @@ export default function App() {
     if (currentSong.audioUrl) {
       // Always reset and reload when song changes
       audio.pause();
+      setIsBuffering(true); // Show loading spinner
 
       // Google Drive URLs can't be played directly by <audio> — they return
       // HTML redirects instead of raw audio bytes. We proxy through our Apps
@@ -137,6 +147,7 @@ export default function App() {
           .then((blobUrl) => {
             audio.src = blobUrl;
             audio.load();
+            // isBuffering will be cleared by the canplay listener
           })
           .catch((err) => {
             console.error('[SonicObsidian] Audio proxy failed:', err);
@@ -152,9 +163,46 @@ export default function App() {
     } else {
       audio.pause();
       audio.src = '';
+      setIsBuffering(false);
     }
     setProgress(0);
   }, [currentSong?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Pre-fetch next track in background ──────────────────────────────────
+  // While the current song plays, silently fetch the next song in the queue
+  // so that when the user clicks skip (or the song ends), the next track
+  // starts instantly from cache instead of waiting 5-8 seconds.
+  // Handles both sequential and shuffle mode.
+  useEffect(() => {
+    if (!currentSong || playQueue.length < 2) return;
+
+    // Determine which song(s) to pre-fetch
+    const songsToPreFetch = [];
+
+    if (isShuffle) {
+      // In shuffle mode, we can't predict which song is next.
+      // Pre-fetch 2-3 random songs from the queue to increase the odds.
+      const otherSongs = playQueue.filter((s) => s.id !== currentSong.id);
+      const shuffled = [...otherSongs].sort(() => Math.random() - 0.5);
+      songsToPreFetch.push(...shuffled.slice(0, 3));
+    } else {
+      // Sequential: pre-fetch the next song in order
+      const nextIdx = (queueIndex + 1) % playQueue.length;
+      songsToPreFetch.push(playQueue[nextIdx]);
+      // Also pre-fetch the one after that if queue is large enough
+      if (playQueue.length > 2) {
+        const nextNextIdx = (queueIndex + 2) % playQueue.length;
+        songsToPreFetch.push(playQueue[nextNextIdx]);
+      }
+    }
+
+    // Fire off pre-fetches in parallel (errors are swallowed inside)
+    songsToPreFetch.forEach((song) => {
+      if (song?.audioUrl) {
+        prefetchAudioBlobUrl(song.audioUrl);
+      }
+    });
+  }, [currentSong?.id, playQueue, queueIndex, isShuffle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync play/pause state — only directly play/pause when audio is already loaded
   useEffect(() => {
@@ -727,6 +775,7 @@ export default function App() {
         <BottomPlayer
           currentSong={currentSong}
           isPlaying={isPlaying}
+          isBuffering={isBuffering}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
           progress={progress}
           onSeek={handleSeek}
