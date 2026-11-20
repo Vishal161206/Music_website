@@ -17,6 +17,7 @@
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL;
 const DRIVE_SECRET = import.meta.env.VITE_DRIVE_SECRET;
 const DRIVE_FOLDER_ID = import.meta.env.VITE_DRIVE_FOLDER_ID;
+const GOOGLE_DRIVE_API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -198,16 +199,9 @@ export async function uploadCoverToDrive(file, songId, onProgress) {
  */
 export const isDriveConfigured = !!APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
 
+// ─── Audio Streaming (Direct Drive API v3 with Apps Script Fallback) ─────────
 
-// ─── Audio Streaming Proxy ───────────────────────────────────────────────────
-// Google Drive URLs (uc?export=download) don't work directly as <audio> src
-// because Google returns redirects and HTML pages instead of raw audio data.
-// This proxy fetches the file through our Apps Script (which CAN access the
-// Drive file) and returns it as base64 JSON. We then decode it into a blob URL
-// that the browser's <audio> element can play natively.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Cache of blob URLs keyed by Google Drive file ID — avoids re-downloading. */
+/** Cache of blob URLs keyed by Google Drive file ID — used only in fallback mode. */
 const audioBlobCache = new Map();
 
 /**
@@ -216,21 +210,21 @@ const audioBlobCache = new Map();
  */
 function extractDriveFileId(url) {
   if (!url) return null;
-  // Format: ...?mode=stream&id=FILE_ID  (our proxy URL)
-  const matchProxy = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (matchProxy) return matchProxy[1];
-  // Format: https://drive.google.com/uc?export=download&id=FILE_ID
-  const matchUc = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (matchUc) return matchUc[1];
+  // Format: ...?mode=stream&id=FILE_ID or https://drive.google.com/uc?export=download&id=FILE_ID
+  const matchQuery = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchQuery) return matchQuery[1];
   // Format: https://drive.google.com/file/d/FILE_ID/...
   const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (matchPath) return matchPath[1];
+  // Format: https://www.googleapis.com/drive/v3/files/FILE_ID?...
+  const matchApi = url.match(/\/files\/([a-zA-Z0-9_-]+)/);
+  if (matchApi) return matchApi[1];
   return null;
 }
 
 /**
- * Check if a URL is a Google Drive URL that needs proxying.
- * Local blob: URLs and data: URLs don't need proxying.
+ * Check if a URL is a Google Drive URL that needs resolving.
+ * Local blob: URLs and data: URLs don't need resolving.
  */
 export function isDriveUrl(url) {
   if (!url) return false;
@@ -242,13 +236,12 @@ export function isDriveUrl(url) {
 }
 
 /**
- * Fetch an audio file from Google Drive through the Apps Script proxy,
- * decode the base64 response, and return a blob URL that <audio> can play.
- *
- * Results are cached by file ID so replaying a song doesn't re-download it.
+ * Return a direct Google Drive API v3 streaming URL (HTTP 206 byte-range streaming)
+ * when VITE_GOOGLE_DRIVE_API_KEY is configured.
+ * Falls back to the Apps Script base64 proxy if no API key is set.
  *
  * @param {string} driveUrl — A Google Drive URL or proxy URL containing a file ID
- * @returns {Promise<string>} — A blob: URL that the browser can play
+ * @returns {Promise<string>} — A streamable URL for the <audio> element
  */
 export async function fetchAudioBlobUrl(driveUrl) {
   const fileId = extractDriveFileId(driveUrl);
@@ -256,7 +249,12 @@ export async function fetchAudioBlobUrl(driveUrl) {
     throw new Error('Could not extract file ID from URL: ' + driveUrl);
   }
 
-  // Return cached blob URL if available
+  // Fast path: direct byte-range streaming via Google Drive API v3 (<1s start)
+  if (GOOGLE_DRIVE_API_KEY) {
+    return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${GOOGLE_DRIVE_API_KEY}`;
+  }
+
+  // Fallback path: return cached blob URL if available
   if (audioBlobCache.has(fileId)) {
     return audioBlobCache.get(fileId);
   }
@@ -281,7 +279,6 @@ export async function fetchAudioBlobUrl(driveUrl) {
     throw new Error(json.error || 'Proxy returned failure');
   }
 
-  // Safely decode Base64 into Uint8Array without blowing up memory
   const binaryString = atob(json.data);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
@@ -290,11 +287,9 @@ export async function fetchAudioBlobUrl(driveUrl) {
     bytes[i] = binaryString.charCodeAt(i);
   }
 
-  // Create Object URL from binary blob
   const blob = new Blob([bytes.buffer], { type: json.mimeType || 'audio/mpeg' });
   const blobUrl = URL.createObjectURL(blob);
 
-  // Cache for re-plays during session
   audioBlobCache.set(fileId, blobUrl);
 
   console.log(
@@ -309,13 +304,9 @@ export async function fetchAudioBlobUrl(driveUrl) {
 
 // ─── Pre-warm & Pre-fetch ────────────────────────────────────────────────────
 
-/**
- * Send a lightweight GET to the Apps Script to wake up the instance.
- * Google Apps Script has a "cold start" (~2-5s) the first time it runs.
- * Calling this on app mount ensures the instance is warm when the user
- * clicks play for the first time.
- */
 export function prewarmProxy() {
+  // Skip waking Apps Script on load when direct Drive API streaming is enabled
+  if (GOOGLE_DRIVE_API_KEY) return;
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
 
   fetch(APPS_SCRIPT_URL, { redirect: 'follow' })
@@ -323,29 +314,20 @@ export function prewarmProxy() {
     .then((data) => {
       console.log('[SonicObsidian] Proxy pre-warmed:', data.status || 'OK');
     })
-    .catch(() => {
-      // Silently ignore — this is a best-effort optimization
-    });
+    .catch(() => { });
 }
 
-/**
- * Silently pre-fetch a song's audio and cache the blob URL.
- * If it's already cached, returns immediately. Errors are swallowed
- * since this is a speculative optimization — the user hasn't clicked
- * this song yet.
- *
- * @param {string} audioUrl — The Google Drive audio URL to pre-fetch
- * @returns {Promise<void>}
- */
 export async function prefetchAudioBlobUrl(audioUrl) {
+  // Direct streaming uses HTTP 206 chunks and starts immediately — no full prefetch needed
+  if (GOOGLE_DRIVE_API_KEY) return;
   if (!audioUrl || !isDriveUrl(audioUrl)) return;
 
   const fileId = extractDriveFileId(audioUrl);
-  if (!fileId || audioBlobCache.has(fileId)) return; // Already cached
+  if (!fileId || audioBlobCache.has(fileId)) return;
 
   try {
     await fetchAudioBlobUrl(audioUrl);
   } catch {
     // Swallow errors — pre-fetch is best-effort
   }
-}
+}
